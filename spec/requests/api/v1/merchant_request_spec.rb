@@ -1,140 +1,61 @@
 require 'rails_helper'
 
+
 describe "Merchant API" do
-  it "show all merchants" do
-     create_list(:merchant, 3)
 
-      get '/api/v1/merchants'
+  # let blocks for actions to do when their name is called
+  # let! will do the specified action immediately
+  let(:parsed) { JSON.parse(response.body, symbolize_names: true)}
+  let(:data) { parsed[:data] }
+  let!(:merchants) { create_list(:merchant, 3) }
 
-      expect(response).to be_successful
 
-
-
-      books = JSON.parse(response.body)
+# shared examples is tests that can be re-used between different contexts
+  shared_examples 'Adheres to JSON API spec' do
+    it 'it adheres to JSON API spec' do
+      expect(parsed).to have_key(:data)
+      expect(data).to be_a(klass)
     end
 
-
-    require 'rails_helper'
-
-describe "Books API" do
-  it "sends a list of books" do
-     create_list(:book, 3)
-
-      get '/api/v1/books'
-
+    it "returns status 200" do
       expect(response).to be_successful
-
-      books = JSON.parse(response.body)
-
-
-    books = JSON.parse(response.body, symbolize_names: true)
-
-    expect(books.count).to eq(3)
-
-    books.each do |book|
-      expect(book).to have_key(:id)
-      expect(book[:id]).to be_an(Integer)
-
-      expect(book).to have_key(:title)
-      expect(book[:title]).to be_a(String)
-
-      expect(book).to have_key(:author)
-      expect(book[:author]).to be_a(String)
-
-      expect(book).to have_key(:genre)
-      expect(book[:genre]).to be_a(String)
-
-      expect(book).to have_key(:summary)
-      expect(book[:summary]).to be_a(String)
-
-      expect(book).to have_key(:number_sold)
-      expect(book[:number_sold]).to be_an(Integer)
     end
   end
 
+# contexts are describes basically
+  context 'GET #index' do
 
-  it "can get one book by its id" do
-    id = create(:book).id
+    # creating the variable for use in the shared example
+    let(:klass) {Array}
+    before do
+      get api_v1_merchants_path
+    end
 
-    get "/api/v1/books/#{id}"
-
-    book = JSON.parse(response.body, symbolize_names: true)
-
-    expect(response).to be_successful
-
-    expect(book).to have_key(:id)
-    expect(book[:id]).to eq(id)
-
-    expect(book).to have_key(:title)
-    expect(book[:title]).to be_a(String)
-
-    expect(book).to have_key(:author)
-    expect(book[:author]).to be_a(String)
-
-    expect(book).to have_key(:genre)
-    expect(book[:genre]).to be_a(String)
-
-    expect(book).to have_key(:summary)
-    expect(book[:summary]).to be_a(String)
-
-    expect(book).to have_key(:number_sold)
-    expect(book[:number_sold]).to be_an(Integer)
+     # calling teh shared behavior
+    it_behaves_like 'Adheres to JSON API spec'
+    it 'returns proper data' do
+      (0..2).all? do |num|
+        data[num][:id] == merchants[num].id &&
+          data[num][:attributes][:name] == merchants[num].name
+      end
+    end
   end
-end
 
-  #
-  #
-  #   books = JSON.parse(response.body, symbolize_names: true)
-  #
-  #   expect(books.count).to eq(3)
-  #
-  #   books.each do |book|
-  #     expect(book).to have_key(:id)
-  #     expect(book[:id]).to be_an(Integer)
-  #
-  #     expect(book).to have_key(:title)
-  #     expect(book[:title]).to be_a(String)
-  #
-  #     expect(book).to have_key(:author)
-  #     expect(book[:author]).to be_a(String)
-  #
-  #     expect(book).to have_key(:genre)
-  #     expect(book[:genre]).to be_a(String)
-  #
-  #     expect(book).to have_key(:summary)
-  #     expect(book[:summary]).to be_a(String)
-  #
-  #     expect(book).to have_key(:number_sold)
-  #     expect(book[:number_sold]).to be_an(Integer)
-  #   end
-  # end
-  #
-  #
-  # it "can get one book by its id" do
-  #   id = create(:book).id
-  #
-  #   get "/api/v1/books/#{id}"
-  #
-  #   book = JSON.parse(response.body, symbolize_names: true)
-  #
-  #   expect(response).to be_successful
-  #
-  #   expect(book).to have_key(:id)
-  #   expect(book[:id]).to eq(id)
-  #
-  #   expect(book).to have_key(:title)
-  #   expect(book[:title]).to be_a(String)
-  #
-  #   expect(book).to have_key(:author)
-  #   expect(book[:author]).to be_a(String)
-  #
-  #   expect(book).to have_key(:genre)
-  #   expect(book[:genre]).to be_a(String)
-  #
-  #   expect(book).to have_key(:summary)
-  #   expect(book[:summary]).to be_a(String)
-  #
-  #   expect(book).to have_key(:number_sold)
-  #   expect(book[:number_sold]).to be_an(Integer)
-  # end
+  context 'GET #show' do
+    let(:klass) {Hash}
+    let(:merchant) {merchants.first}
+    before do
+      get api_v1_merchant_path(merchant.id)
+    end
+    it_behaves_like 'Adheres to JSON API spec'
+
+    it 'has a merchant name' do
+      expect(data[:attributes][:name]).to eq(merchant.name)
+    end
+
+    # it 'returns a single resource' do
+    #   expect(data).to be_an(Hash)
+    #
+    # end
+  end
 end
