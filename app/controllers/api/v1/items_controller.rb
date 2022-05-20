@@ -8,8 +8,22 @@ class Api::V1::ItemsController < ApplicationController
   end
 
   def create
-    new_item = Item.create!(item_params)
-    render json: ItemSerializer.new(new_item), status: 201
+  @order = ...
+
+  if @order.save
+    render json: @order
+  else
+    render json: { message: "Validation failed", errors: @order.errors }, status: 400
+  end
+end
+
+  def create
+    new_item = Item.create(item_params)
+    if new_item.valid?
+      render json: ItemSerializer.new(new_item), status: 201
+    else
+      render json: { message: "Validation failed", errors: new_item.errors }, status: 422
+    end
   end
 
   private

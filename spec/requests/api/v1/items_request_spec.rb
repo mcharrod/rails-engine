@@ -69,22 +69,54 @@ describe "Item API" do
     let(:klass) {Hash}
     let(:merchant) {create(:merchant)}
 
-    let(:item_params) do
-      {
-        item: {
-          name: "hairbrush",
-          description: "evil",
-          unit_price: 100.99,
-          merchant_id: merchant.id }
-      }
+    context 'happy path' do
+      # valid data here
+      let(:item_params) do
+        {
+          item: {
+            name: "hairbrush",
+            description: "evil",
+            unit_price: 100.99,
+            merchant_id: merchant.id }
+        }
+      end
+
+      it 'creates an item' do
+        expect {
+          post api_v1_items_path(item_params)
+        }.to change { Item.where(**item_params[:item]).count }
+      end
     end
 
-    it 'happy path creates an item' do
-      expect {
-        post api_v1_items_path(item_params)
-      }.to change { Item.where(**item_params[:item]).count }
+    context "given invalid data" do
+      # invalid data here
+      let(:invalid_item_params) do
+        {
+          item: {
+            description: 5,
+            unit_price: "no",
+            merchant_id: merchant.id }
+        }
+      end
+
+      it 'does not create an item' do
+        expect {
+          post api_v1_items_path(invalid_item_params)
+        }.not_to change { Item.count }
+      end
+
+      it 'returns validation error messages' do
+        post api_v1_items_path(invalid_item_params)
+        expect(parsed).to include(message: "Validation failed")
+        expect(parsed).to include(errors: hash_including(
+          unit_price: ["is not a number"],
+          name: ["can't be blank"]
+        ))
+      end
+
+      it 'returns 422 status' do
+        expect(post api_v1_items_path(invalid_item_params)).to eq(422)
+      end
     end
-
-
   end
 end
