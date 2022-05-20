@@ -41,7 +41,7 @@ describe "Item API" do
     end
   end
 
-  context 'GET #show' do
+  context 'GET#show' do
     # expected data type for 1 resource is hash vs an array
     let(:klass) {Hash}
 
@@ -84,7 +84,7 @@ describe "Item API" do
       it 'creates an item' do
         expect {
           post api_v1_items_path(item_params)
-        }.to change { Item.where(**item_params[:item]).count }
+        }.to change { Item.where(**item_params[:item]).count }.by 1
       end
     end
 
@@ -117,6 +117,16 @@ describe "Item API" do
       it 'returns 422 status' do
         expect(post api_v1_items_path(invalid_item_params)).to eq(422)
       end
+    end
+  end
+
+  context 'DELETE #destroy' do
+    let!(:item) {create(:item)}
+
+    it 'deletes the item' do
+      expect {
+        delete api_v1_item_path(item.id)
+      }.to change { Item.count }.by -1
     end
   end
 end
